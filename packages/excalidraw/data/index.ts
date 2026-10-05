@@ -31,7 +31,7 @@ import { t } from "../i18n";
 import { getSelectedElements, isSomeElementSelected } from "../scene";
 import { exportToCanvas, exportToSvg } from "../scene/export";
 
-import { canvasToBlob } from "./blob";
+import { blobToArrayBuffer, canvasToBlob } from "./blob";
 import { fileSave } from "./filesystem";
 import { serializeAsJSON } from "./json";
 
@@ -183,7 +183,7 @@ export const exportCanvas = async (
           exportingFrame: pageFrame,
         });
         const blob = await canvasToBlob(canvas);
-        const image = await pdfDoc.embedPng(await blob.arrayBuffer());
+        const image = await pdfDoc.embedPng(await blobToArrayBuffer(blob));
         const page = pdfDoc.addPage([image.width, image.height]);
 
         page.drawImage(image, {

@@ -4,13 +4,14 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_EXPORT_PADDING,
   EXPORT_IMAGE_TYPES,
-  isFirefox,
   EXPORT_SCALES,
   cloneJSON,
+  isFirefox,
 } from "@excalidraw/common";
 
-import type { NonDeletedExcalidrawElement } from "@excalidraw/element/types";
 import { getFrameLikeElements } from "@excalidraw/element";
+
+import type { NonDeletedExcalidrawElement } from "@excalidraw/element/types";
 
 import {
   actionExportWithDarkMode,
