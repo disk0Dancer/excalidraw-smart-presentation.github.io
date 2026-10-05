@@ -12,6 +12,8 @@ import { getNonDeletedElements } from "@excalidraw/element";
 
 import { isFrameLikeElement } from "@excalidraw/element";
 
+import { getFrameLikeElements } from "@excalidraw/element";
+
 import { getElementsOverlappingFrame } from "@excalidraw/element";
 
 import type {
@@ -104,6 +106,7 @@ export const exportCanvas = async (
     name = appState.name || DEFAULT_FILENAME,
     fileHandle = null,
     exportingFrame = null,
+    exportPdfPerFrame = false,
   }: {
     exportBackground: boolean;
     exportPadding?: number;
@@ -112,6 +115,7 @@ export const exportCanvas = async (
     name?: string;
     fileHandle?: FileSystemHandle | null;
     exportingFrame: ExcalidrawFrameLikeElement | null;
+    exportPdfPerFrame?: boolean;
   },
 ) => {
   if (elements.length === 0) {
@@ -158,6 +162,48 @@ export const exportCanvas = async (
       }
       return;
     }
+  }
+
+  if (type === "pdf") {
+    const pdfBlob = (async () => {
+      const { PDFDocument } = await import("pdf-lib");
+      const pdfDoc = await PDFDocument.create();
+
+      const framePages =
+        exportingFrame || !exportPdfPerFrame
+          ? [exportingFrame]
+          : getFrameLikeElements(elements);
+      const pagesToExport = framePages.length ? framePages : [null];
+
+      for (const pageFrame of pagesToExport) {
+        const canvas = exportToCanvas(elements, appState, files, {
+          exportBackground,
+          viewBackgroundColor,
+          exportPadding,
+          exportingFrame: pageFrame,
+        });
+        const blob = await canvasToBlob(canvas);
+        const image = await pdfDoc.embedPng(await blob.arrayBuffer());
+        const page = pdfDoc.addPage([image.width, image.height]);
+
+        page.drawImage(image, {
+          x: 0,
+          y: 0,
+          width: image.width,
+          height: image.height,
+        });
+      }
+
+      return new Blob([await pdfDoc.save()], { type: MIME_TYPES.pdf });
+    })();
+
+    return fileSave(pdfBlob, {
+      description: "Export to PDF",
+      name,
+      extension: "pdf",
+      mimeTypes: [MIME_TYPES.pdf],
+      fileHandle: null,
+    });
   }
 
   const tempCanvas = exportToCanvas(elements, appState, files, {
