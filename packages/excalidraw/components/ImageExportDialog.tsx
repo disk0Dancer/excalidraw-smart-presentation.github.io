@@ -4,10 +4,12 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_EXPORT_PADDING,
   EXPORT_IMAGE_TYPES,
-  isFirefox,
   EXPORT_SCALES,
   cloneJSON,
+  isFirefox,
 } from "@excalidraw/common";
+
+import { getFrameLikeElements } from "@excalidraw/element";
 
 import type { NonDeletedExcalidrawElement } from "@excalidraw/element/types";
 
@@ -112,6 +114,11 @@ const ImageExportModal = ({
     elementsSnapshot,
     appStateSnapshot,
     exportSelectionOnly,
+  );
+  const hasFrames =
+    !!exportingFrame || getFrameLikeElements(exportedElements).length > 0;
+  const [exportPdfPerFrame, setExportPdfPerFrame] = useState(
+    hasFrames && !exportingFrame,
   );
 
   useEffect(() => {
@@ -284,6 +291,18 @@ const ImageExportModal = ({
             }))}
           />
         </ExportSetting>
+        {hasFrames && !exportingFrame && (
+          <ExportSetting
+            label={t("imageExportDialog.label.pdfPerFrame")}
+            name="exportPdfPerFrame"
+          >
+            <Switch
+              name="exportPdfPerFrame"
+              checked={exportPdfPerFrame}
+              onChange={setExportPdfPerFrame}
+            />
+          </ExportSetting>
+        )}
 
         <div className="ImageExportModal__settings__buttons">
           <FilledButton
@@ -309,6 +328,19 @@ const ImageExportModal = ({
             icon={downloadIcon}
           >
             {t("imageExportDialog.button.exportToSvg")}
+          </FilledButton>
+          <FilledButton
+            className="ImageExportModal__settings__buttons__button"
+            label={t("imageExportDialog.title.exportToPdf")}
+            onClick={() =>
+              onExportImage(EXPORT_IMAGE_TYPES.pdf, exportedElements, {
+                exportingFrame,
+                exportPdfPerFrame,
+              })
+            }
+            icon={downloadIcon}
+          >
+            {t("imageExportDialog.button.exportToPdf")}
           </FilledButton>
           {(probablySupportsClipboardBlob || isFirefox) && (
             <FilledButton
